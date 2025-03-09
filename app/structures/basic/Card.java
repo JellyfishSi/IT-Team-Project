@@ -3,7 +3,7 @@
  * A card has an id, a name (cardname) and a manacost. A card then has a large and mini
  * version. The mini version is what is rendered at the bottom of the screen. The big
  * version is what is rendered when the player clicks on a card in their hand.
- * 
+ *
  * @author Dr. Richard McCreadie
  *
  */
@@ -175,48 +175,50 @@ public class Card {
 	 */
 	@JsonIgnore
 	protected void setupTargetRequirement(TargetType targetType) {
+		GameState gameState = GameState.getInstance();
+
 		switch (targetType) {
 			case NONE:
 				targetRequirement = null;  // 无目标
 				break;
 			case FRIENDLY_UNIT:
 				targetRequirement = new BasicTargetRequirement(tile -> {
-					Unit unit = GameState.getUnitAtTile(tile);
+					Unit unit = gameState.getUnitAtTile(tile);
 					return unit != null && unit.getOwner() == owner && unit.getUnitType() != Unit.UnitType.AVATAR;
 				});
 				break;
 			case ENEMY_UNIT:
 				targetRequirement = new BasicTargetRequirement(tile -> {
-					Unit unit = GameState.getUnitAtTile(tile);
+					Unit unit = gameState.getUnitAtTile(tile);
 					return unit != null && unit.getOwner() != owner && unit.getUnitType() != Unit.UnitType.AVATAR;
 				});
 				break;
 			case ANY_UNIT:
 				targetRequirement = new BasicTargetRequirement(tile -> {
-					Unit unit = GameState.getUnitAtTile(tile);
+					Unit unit = gameState.getUnitAtTile(tile);
 					return unit != null && unit.getUnitType() != Unit.UnitType.AVATAR;
 				});
 				break;
 			case FRIENDLY_AVATAR:
 				targetRequirement = new BasicTargetRequirement(tile -> {
-					Unit unit = GameState.getUnitAtTile(tile);
+					Unit unit = gameState.getUnitAtTile(tile);
 					return unit != null && unit.getOwner() == owner && unit.getUnitType() == Unit.UnitType.AVATAR;
 				});
 				break;
 			case ENEMY_AVATAR:
 				targetRequirement = new BasicTargetRequirement(tile -> {
-					Unit unit = GameState.getUnitAtTile(tile);
+					Unit unit = gameState.getUnitAtTile(tile);
 					return unit != null && unit.getOwner() != owner && unit.getUnitType() == Unit.UnitType.AVATAR;
 				});
 				break;
 			case ANY_AVATAR:
 				targetRequirement = new BasicTargetRequirement(tile -> {
-					Unit unit = GameState.getUnitAtTile(tile);
+					Unit unit = gameState.getUnitAtTile(tile);
 					return unit != null && unit.getUnitType() == Unit.UnitType.AVATAR;
 				});
 				break;
 			case EMPTY_TILE:
-				targetRequirement = new BasicTargetRequirement(tile -> GameState.getUnitAtTile(tile) == null);
+				targetRequirement = new BasicTargetRequirement(tile -> gameState.getUnitAtTile(tile) == null);
 				break;
 			case ADJACENT_TILE:
 				targetRequirement = new AdjacentTileTargetRequirement(owner);
@@ -633,7 +635,6 @@ public class Card {
 	/**
 	 * 卡牌能力接口，定义卡牌的特殊能力
 	 */
-
 	public interface CardAbility {
 		String getName();
 		void applyEffect(GameState gameState, Tile targetTile);
@@ -642,7 +643,6 @@ public class Card {
 	/**
 	 * 目标要求接口，定义卡牌目标选择的要求
 	 */
-
 	public interface TargetRequirement {
 		/**
 		 * 检查目标是否有效
@@ -663,7 +663,6 @@ public class Card {
 	/**
 	 * 基本目标要求实现类，使用谓词过滤目标
 	 */
-
 	public static class BasicTargetRequirement implements TargetRequirement {
 		private Predicate<Tile> targetFilter;
 
@@ -697,7 +696,6 @@ public class Card {
 	/**
 	 * 相邻格子目标要求实现类，筛选出与友方单位相邻的空格子
 	 */
-
 	public static class AdjacentTileTargetRequirement implements TargetRequirement {
 		private Player owner;
 
@@ -708,7 +706,7 @@ public class Card {
 		@Override
 		public boolean isValidTarget(GameState gameState, Tile targetTile) {
 			// 检查目标格子是否为空
-			if (GameState.getUnitAtTile(targetTile) != null) {
+			if (gameState.getUnitAtTile(targetTile) != null) {
 				return false;
 			}
 
@@ -729,7 +727,7 @@ public class Card {
 							adjacentY >= 0 && adjacentY < gameState.getBoardHeight()) {
 
 						Tile adjacentTile = gameState.getTile(adjacentX, adjacentY);
-						Unit adjacentUnit = GameState.getUnitAtTile(adjacentTile);
+						Unit adjacentUnit = gameState.getUnitAtTile(adjacentTile);
 
 						// 如果相邻格子有己方单位，则目标有效
 						if (adjacentUnit != null && adjacentUnit.getOwner() == owner) {
@@ -758,12 +756,5 @@ public class Card {
 
 			return validTargets;
 		}
-	}
-
-	// 静态辅助方法，从GameState获取单位（临时添加，应移至适当位置）
-	@JsonIgnore
-	private static Unit getUnitAtTile(Tile tile) {
-		// 这里只是为了编译通过，实际应该调用GameState的方法
-		return null;
 	}
 }

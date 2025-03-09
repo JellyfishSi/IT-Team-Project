@@ -35,7 +35,7 @@ public class Sprint1Demo {
         try {Thread.sleep(2000);} catch (InterruptedException e) {e.printStackTrace();}
 
         // 创建游戏状态
-        GameState gameState = new GameState();
+        GameState gameState = GameState.getInstance();
 
         // 创建玩家
         demoPlayerCreation(out, gameState);
@@ -323,8 +323,8 @@ public class Sprint1Demo {
                     Unit target = aiPlayer.getAvatar();
                     Tile targetTile = BasicObjectBuilders.loadTile(target.getPosition().getTilex(), target.getPosition().getTiley());
 
-                    // 播放法术效果
-                    EffectAnimation effect = BasicObjectBuilders.loadEffect(StaticConfFiles.f1_inmolation, Unit.GameEvent.class);
+                    // 播放法术效果 - 修正loadEffect调用
+                    EffectAnimation effect = BasicObjectBuilders.loadEffect(StaticConfFiles.f1_inmolation);
                     BasicCommands.playEffectAnimation(out, effect, targetTile);
                     try {Thread.sleep(2000);} catch (InterruptedException e) {e.printStackTrace();}
 
@@ -355,8 +355,8 @@ public class Sprint1Demo {
                             unit.setMaxHealth(2);
                         }
 
-                        // 播放召唤效果
-                        EffectAnimation summonEffect = BasicObjectBuilders.loadEffect(StaticConfFiles.f1_summon, Unit.GameEvent.class);
+                        // 播放召唤效果 - 修正loadEffect调用
+                        EffectAnimation summonEffect = BasicObjectBuilders.loadEffect(StaticConfFiles.f1_summon);
                         BasicCommands.playEffectAnimation(out, summonEffect, summonTile);
                         try {Thread.sleep(2000);} catch (InterruptedException e) {e.printStackTrace();}
 

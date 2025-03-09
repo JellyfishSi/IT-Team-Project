@@ -1,7 +1,7 @@
 /**
  * This class can be used to hold information about the on-going game.
  * Its created with the GameActor.
- * 
+ *
  * @author Dr. Richard McCreadie
  *
  */
@@ -20,8 +20,10 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 
 import structures.basic.Card;
+import structures.basic.EffectAnimation;
 import structures.basic.Player;
 import structures.basic.Position;
 import structures.basic.Tile;
@@ -36,6 +38,28 @@ import structures.basic.Unit;
  *
  */
 public class GameState {
+
+	// 单例模式实现
+	private static GameState instance;
+
+	/**
+	 * 获取GameState实例
+	 * @return GameState的单例实例
+	 */
+	public static GameState getInstance() {
+		if (instance == null) {
+			instance = new GameState();
+		}
+		return instance;
+	}
+
+	/**
+	 * 重置GameState实例
+	 * 主要用于测试或开始新游戏
+	 */
+	public static void resetInstance() {
+		instance = new GameState();
+	}
 
 	// 保留原有字段以保持兼容性
 	public boolean gameInitalised = false;
@@ -72,6 +96,9 @@ public class GameState {
 
 	// 存储所有单位的列表，便于快速访问
 	private List<Unit> allUnits = new ArrayList<>();
+
+	// 随机数生成器，用于随机决策
+	private Random random = new Random();
 
 	/**
 	 * 默认构造函数
@@ -347,7 +374,7 @@ public class GameState {
 	 * @param y 纵坐标
 	 * @return 如果在范围内返回true
 	 */
-	private boolean isValidPosition(int x, int y) {
+	public boolean isValidPosition(int x, int y) {
 		return x >= 0 && x < BOARD_WIDTH && y >= 0 && y < BOARD_HEIGHT;
 	}
 
@@ -357,6 +384,8 @@ public class GameState {
 	 * @return 位于该位置的单位，如果没有则返回null
 	 */
 	public Unit getUnitAtTile(Tile tile) {
+		if (tile == null) return null;
+
 		for (Position pos : unitPositions.keySet()) {
 			if (pos.getTilex() == tile.getTilex() && pos.getTiley() == tile.getTiley()) {
 				return unitPositions.get(pos);
@@ -514,8 +543,173 @@ public class GameState {
 			if (unit.hasAbility("Deathwatch")) {
 				// 这里应该调用具体的死亡监视效果
 				// 在实际实现中，每个单位的死亡监视效果可能不同
+				unit.triggerAbility("Deathwatch");
 			}
 		}
+	}
+
+	/**
+	 * 从指定位置获取相邻的空位置
+	 * @param unit 中心单位
+	 * @return 相邻的空位置列表
+	 */
+	private List<Tile> getAdjacentEmptyTiles(Unit unit) {
+		List<Tile> emptyTiles = new ArrayList<>();
+		Position pos = unit.getPosition();
+		int tilex = pos.getTilex();
+		int tiley = pos.getTiley();
+
+		// 检查相邻的8个方向
+		for (int dx = -1; dx <= 1; dx++) {
+			for (int dy = -1; dy <= 1; dy++) {
+				if (dx == 0 && dy == 0) continue; // 跳过自身
+
+				int adjacentX = tilex + dx;
+				int adjacentY = tiley + dy;
+
+				if (isValidPosition(adjacentX, adjacentY)) {
+					Tile adjacentTile = tiles[adjacentX][adjacentY];
+					if (getUnitAtTile(adjacentTile) == null) {
+						emptyTiles.add(adjacentTile);
+					}
+				}
+			}
+		}
+
+		return emptyTiles;
+	}
+
+	/**
+	 * 在指定单位周围随机位置召唤一个单位
+	 * @param sourceUnit 源单位
+	 * @param unitType 要召唤的单位类型(配置文件路径)
+	 * @return 召唤的单位，如果无法召唤则返回null
+	 */
+	public Unit summonAdjacentRandomUnit(Unit sourceUnit, String unitType) {
+		List<Tile> emptyTiles = getAdjacentEmptyTiles(sourceUnit);
+		if (emptyTiles.isEmpty()) {
+			return null; // 没有空位可以召唤
+		}
+
+		// 随机选择一个空位
+		Tile targetTile = emptyTiles.get(random.nextInt(emptyTiles.size()));
+
+		// 召唤单位
+		return summonUnitAt(unitType, targetTile, sourceUnit.getOwner());
+	}
+
+	/**
+	 * 在指定位置召唤单位
+	 * @param unitType 单位类型(配置文件路径)
+	 * @param tile 目标位置
+	 * @param owner 单位所有者
+	 * @return 召唤的单位
+	 */
+	public Unit summonUnitAt(String unitType, Tile tile, Player owner) {
+		// 在实际实现中，应该使用BasicObjectBuilders加载单位
+		// 这里简化为返回null
+		// Unit unit = BasicObjectBuilders.loadUnit(unitType, nextUnitId(), Unit.class);
+		return null;
+	}
+
+	/**
+	 * 获取单位相邻的已受伤的敌方单位
+	 * @param unit 中心单位
+	 * @return 相邻的已受伤敌方单位列表
+	 */
+	public List<Unit> getAdjacentEnemyUnitsWithLowHealth(Unit unit) {
+		List<Unit> targetUnits = new ArrayList<>();
+		Position pos = unit.getPosition();
+		int tilex = pos.getTilex();
+		int tiley = pos.getTiley();
+
+		// 检查相邻的8个方向
+		for (int dx = -1; dx <= 1; dx++) {
+			for (int dy = -1; dy <= 1; dy++) {
+				if (dx == 0 && dy == 0) continue; // 跳过自身
+
+				int adjacentX = tilex + dx;
+				int adjacentY = tiley + dy;
+
+				if (isValidPosition(adjacentX, adjacentY)) {
+					Tile adjacentTile = tiles[adjacentX][adjacentY];
+					Unit adjacentUnit = getUnitAtTile(adjacentTile);
+
+					// 检查是否是敌方单位且已受伤
+					if (adjacentUnit != null &&
+							adjacentUnit.getOwner() != unit.getOwner() &&
+							adjacentUnit.getHealth() < adjacentUnit.getMaxHealth()) {
+						targetUnits.add(adjacentUnit);
+					}
+				}
+			}
+		}
+
+		return targetUnits;
+	}
+
+	/**
+	 * 获取单位前方和后方的友方单位
+	 * @param unit 中心单位
+	 * @return 前方和后方的友方单位列表
+	 */
+	public List<Unit> getAdjacentFriendlyUnitsInLine(Unit unit) {
+		List<Unit> lineUnits = new ArrayList<>();
+		Position pos = unit.getPosition();
+		int tilex = pos.getTilex();
+		int tiley = pos.getTiley();
+
+		// 获取单位所属玩家的头像位置，确定方向
+		Unit avatar = unit.getOwner().getAvatar();
+		if (avatar == null) return lineUnits;
+
+		Position avatarPos = avatar.getPosition();
+
+		// 根据头像位置确定前进方向
+		int dx = (tilex > avatarPos.getTilex()) ? 1 : -1;
+
+		// 检查前方和后方单位
+		int frontX = tilex + dx;
+		int backX = tilex - dx;
+
+		// 检查前方
+		if (isValidPosition(frontX, tiley)) {
+			Tile frontTile = tiles[frontX][tiley];
+			Unit frontUnit = getUnitAtTile(frontTile);
+			if (frontUnit != null && frontUnit.getOwner() == unit.getOwner()) {
+				lineUnits.add(frontUnit);
+			}
+		}
+
+		// 检查后方
+		if (isValidPosition(backX, tiley)) {
+			Tile backTile = tiles[backX][tiley];
+			Unit backUnit = getUnitAtTile(backTile);
+			if (backUnit != null && backUnit.getOwner() == unit.getOwner()) {
+				lineUnits.add(backUnit);
+			}
+		}
+
+		return lineUnits;
+	}
+
+	/**
+	 * 播放效果动画
+	 * @param effect 效果动画
+	 * @param tile 目标位置
+	 */
+	public void playEffectAnimation(EffectAnimation effect, Tile tile) {
+		// 此方法应该调用BasicCommands.playEffectAnimation
+		// 在实际实现中需要有对应的实现
+	}
+
+	/**
+	 * 生成下一个单位ID
+	 * @return 新的单位ID
+	 */
+	private int nextUnitId() {
+		// 简单实现，实际应该有更好的ID生成策略
+		return allUnits.size() + 10;
 	}
 
 	// Getters and Setters
