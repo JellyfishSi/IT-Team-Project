@@ -1,12 +1,3 @@
-/**
- * This is the base representation of a Card which is rendered in the player's hand.
- * A card has an id, a name (cardname) and a manacost. A card then has a large and mini
- * version. The mini version is what is rendered at the bottom of the screen. The big
- * version is what is rendered when the player clicks on a card in their hand.
- *
- * @author Dr. Richard McCreadie
- *
- */
 package structures.basic;
 
 import java.util.ArrayList;
@@ -353,83 +344,39 @@ public class Card {
 		// 基于能力名称创建相应的能力实例
 		switch (abilityName) {
 			case "Provoke":
-				return new Unit.Ability() {
-					@Override
-					public String getName() {
-						return "Provoke";
-					}
-
-					@Override
-					public void applyEffect(Unit unit) {
-						// 嘲讽能力的效果在GameState的移动和攻击逻辑中处理
-					}
-				};
-
+				return new Unit.ProvokeAbility();
 			case "Flying":
-				return new Unit.Ability() {
-					@Override
-					public String getName() {
-						return "Flying";
-					}
-
-					@Override
-					public void applyEffect(Unit unit) {
-						// 飞行能力的效果在GameState的移动逻辑中处理
-					}
-				};
-
+				return new Unit.FlyingAbility();
 			case "Rush":
-				return new Unit.Ability() {
-					@Override
-					public String getName() {
-						return "Rush";
-					}
-
-					@Override
-					public void applyEffect(Unit unit) {
-						// 冲锋能力允许单位在被召唤的回合就可以行动
-					}
-				};
-
+				return new Unit.RushAbility();
 			case "Deathwatch":
-				return new Unit.Ability() {
-					@Override
-					public String getName() {
-						return "Deathwatch";
-					}
-
-					@Override
-					public void applyEffect(Unit unit) {
-						// 死亡监视效果在GameState中处理单位死亡时触发
-					}
-				};
-
+				// 根据卡牌名称判断使用哪种死亡监视能力
+				if (cardname.equals("Shadow Watcher")) {
+					return new Unit.StatBuffDeathwatchAbility(1, 1);
+				} else if (cardname.equals("Bad Omen")) {
+					return new Unit.AttackBuffDeathwatchAbility(1);
+				} else if (cardname.equals("Shadowdancer")) {
+					return new Unit.DamageHealDeathwatchAbility(1, 1);
+				} else if (cardname.equals("Bloodmoon Priestess")) {
+					return new Unit.SummonDeathwatchAbility("conf/gameconfs/units/wraithling.json");
+				}
+				return null;
+			case "OpeningGambit":
+				// 根据卡牌名称判断使用哪种入场效果
+				if (cardname.equals("Gloom Chaser")) {
+					// 在单位后方召唤Wraithling
+					Position relativePos = new Position(0, 0, -1, 0); // 相对位置，在左侧（后方）
+					return new Unit.SummonOpeningGambitAbility("conf/gameconfs/units/wraithling.json", relativePos);
+				} else if (cardname.equals("Nightsorrow Assassin")) {
+					return new Unit.DestroyOpeningGambitAbility();
+				} else if (cardname.equals("Silverguard Squire")) {
+					return new Unit.BuffOpeningGambitAbility(1, 1);
+				}
+				return null;
 			case "Zeal":
-				return new Unit.Ability() {
-					@Override
-					public String getName() {
-						return "Zeal";
-					}
-
-					@Override
-					public void applyEffect(Unit unit) {
-						// 热诚效果在玩家的头像受到伤害时触发
-					}
-				};
-
+				return new Unit.ZealAbility(2);
 			case "Airdrop":
-				return new Unit.Ability() {
-					@Override
-					public String getName() {
-						return "Airdrop";
-					}
-
-					@Override
-					public void applyEffect(Unit unit) {
-						// 空投能力允许单位被放置在棋盘上的任何位置
-					}
-				};
-
+				return new Unit.AirdropAbility();
 			default:
 				return null;
 		}

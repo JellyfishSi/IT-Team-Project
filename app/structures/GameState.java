@@ -367,6 +367,94 @@ public class GameState {
 		return validMoves;
 	}
 
+	// 添加到GameState类中的新字段
+	private Map<Unit, Boolean> unitMovingStates = new HashMap<>(); // 存储单位是否在移动的状态
+	private Unit unitInMotion = null; // 当前正在移动的单位
+	private long unitMoveStartTime = 0; // 单位开始移动的时间戳
+
+	/**
+	 * 设置单位的移动状态
+	 * @param unit 要设置状态的单位
+	 * @param moving 是否正在移动
+	 */
+	public void setUnitMoving(Unit unit, boolean moving) {
+		if (unit != null) {
+			unitMovingStates.put(unit, moving);
+		}
+	}
+
+	/**
+	 * 检查单位是否正在移动
+	 * @param unit 要检查的单位
+	 * @return 如果单位正在移动则返回true
+	 */
+	public boolean isUnitMoving(Unit unit) {
+		return unit != null && unitMovingStates.getOrDefault(unit, false);
+	}
+
+	/**
+	 * 设置当前正在移动的单位
+	 * @param unit 正在移动的单位
+	 */
+	public void setUnitInMotion(Unit unit) {
+		this.unitInMotion = unit;
+	}
+
+	/**
+	 * 获取当前正在移动的单位
+	 * @return 正在移动的单位，如果没有则返回null
+	 */
+	public Unit getUnitInMotion() {
+		return unitInMotion;
+	}
+
+	/**
+	 * 清除当前正在移动的单位
+	 * 通常在单位停止移动时调用
+	 */
+	public void clearUnitInMotion() {
+		this.unitInMotion = null;
+	}
+
+	/**
+	 * 设置单位开始移动的时间戳
+	 * @param time 时间戳（毫秒）
+	 */
+	public void setUnitMoveStartTime(long time) {
+		this.unitMoveStartTime = time;
+	}
+
+	/**
+	 * 获取单位开始移动的时间戳
+	 * @return 时间戳（毫秒）
+	 */
+	public long getUnitMoveStartTime() {
+		return unitMoveStartTime;
+	}
+
+	/**
+	 * 清除所有单位的移动状态
+	 * 通常在回合结束时调用
+	 */
+	public void clearAllUnitMovingStates() {
+		unitMovingStates.clear();
+		unitInMotion = null;
+		unitMoveStartTime = 0;
+	}
+
+	/**
+	 * 在单位从游戏中移除时，清除其移动状态
+	 * @param unit 要移除状态的单位
+	 */
+	public void clearUnitMovingState(Unit unit) {
+		if (unit != null) {
+			unitMovingStates.remove(unit);
+			if (unitInMotion == unit) {
+				clearUnitInMotion();
+			}
+		}
+	}
+
 	/**
 	 * 检查位置是否在棋盘范围内
 	 * @param x 横坐标
