@@ -602,7 +602,7 @@ public class Unit {
 	/**
 	 * 单位能力接口，定义单位特殊能力
 	 */
-	@JsonIgnore
+
 	public interface Ability {
 		/**
 		 * 获取能力名称
@@ -620,7 +620,7 @@ public class Unit {
 	/**
 	 * 嘲讽能力实现
 	 */
-	@JsonIgnore
+
 	public static class ProvokeAbility implements Ability {
 		@Override
 		public String getName() {
@@ -636,7 +636,7 @@ public class Unit {
 	/**
 	 * 飞行能力实现
 	 */
-	@JsonIgnore
+
 	public static class FlyingAbility implements Ability {
 		@Override
 		public String getName() {
@@ -652,7 +652,7 @@ public class Unit {
 	/**
 	 * 冲锋能力实现
 	 */
-	@JsonIgnore
+
 	public static class RushAbility implements Ability {
 		@Override
 		public String getName() {
@@ -669,7 +669,7 @@ public class Unit {
 	 * 死亡监视能力基类
 	 * 具体效果由子类实现
 	 */
-	@JsonIgnore
+
 	public static abstract class DeathwatchAbility implements Ability {
 		@Override
 		public String getName() {
@@ -684,7 +684,7 @@ public class Unit {
 	 * 属性增益死亡监视能力
 	 * 用于Shadow Watcher类型的单位
 	 */
-	@JsonIgnore
+
 	public static class StatBuffDeathwatchAbility extends DeathwatchAbility {
 		private int attackBuff;
 		private int healthBuff;
@@ -705,7 +705,7 @@ public class Unit {
 	 * 只增加攻击力的死亡监视能力
 	 * 用于Bad Omen类型的单位
 	 */
-	@JsonIgnore
+
 	public static class AttackBuffDeathwatchAbility extends DeathwatchAbility {
 		private int attackBuff;
 
@@ -723,7 +723,7 @@ public class Unit {
 	 * 伤害和治疗死亡监视能力
 	 * 用于Shadowdancer类型的单位
 	 */
-	@JsonIgnore
+
 	public static class DamageHealDeathwatchAbility extends DeathwatchAbility {
 		private int damage;
 		private int heal;
@@ -754,7 +754,7 @@ public class Unit {
 	 * 召唤死亡监视能力
 	 * 用于Bloodmoon Priestess类型的单位
 	 */
-	@JsonIgnore
+
 	public static class SummonDeathwatchAbility extends DeathwatchAbility {
 		private String unitToSummon;
 
@@ -773,7 +773,7 @@ public class Unit {
 	 * 入场效果能力基类
 	 * 具体效果由子类实现
 	 */
-	@JsonIgnore
+
 	public static abstract class OpeningGambitAbility implements Ability {
 		@Override
 		public String getName() {
@@ -788,7 +788,7 @@ public class Unit {
 	 * 召唤单位入场效果
 	 * 用于Gloom Chaser类型的单位
 	 */
-	@JsonIgnore
+
 	public static class SummonOpeningGambitAbility extends OpeningGambitAbility {
 		private String unitToSummon;
 		private Position relativePosition; // 相对位置
@@ -818,7 +818,7 @@ public class Unit {
 	 * 消灭敌方单位入场效果
 	 * 用于Nightsorrow Assassin类型的单位
 	 */
-	@JsonIgnore
+
 	public static class DestroyOpeningGambitAbility extends OpeningGambitAbility {
 		@Override
 		public void applyEffect(Unit unit) {
@@ -837,7 +837,7 @@ public class Unit {
 	 * 增益友方单位入场效果
 	 * 用于Silverguard Squire类型的单位
 	 */
-	@JsonIgnore
+
 	public static class BuffOpeningGambitAbility extends OpeningGambitAbility {
 		private int attackBuff;
 		private int healthBuff;
@@ -863,7 +863,7 @@ public class Unit {
 	 * 热诚能力实现
 	 * 当玩家头像受到伤害时触发
 	 */
-	@JsonIgnore
+
 	public static class ZealAbility implements Ability {
 		private int attackBuff;
 
@@ -886,7 +886,7 @@ public class Unit {
 	 * 空投能力实现
 	 * 允许单位被放置在棋盘上的任何位置
 	 */
-	@JsonIgnore
+
 	public static class AirdropAbility implements Ability {
 		@Override
 		public String getName() {
@@ -902,7 +902,7 @@ public class Unit {
 	/**
 	 * 神器类，表示可装备在Avatar上的物品
 	 */
-	@JsonIgnore
+
 	public static class Artifact {
 		private String name;
 		private int robustness;
@@ -953,7 +953,7 @@ public class Unit {
 	 * 游戏事件枚举
 	 * 用于触发神器效果
 	 */
-	@JsonIgnore
+
 	public enum GameEvent {
 		ON_DAMAGE,      // 受到伤害时
 		ON_ATTACK,      // 攻击时

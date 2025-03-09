@@ -633,7 +633,7 @@ public class Card {
 	/**
 	 * 卡牌能力接口，定义卡牌的特殊能力
 	 */
-	@JsonIgnore
+
 	public interface CardAbility {
 		String getName();
 		void applyEffect(GameState gameState, Tile targetTile);
@@ -642,7 +642,7 @@ public class Card {
 	/**
 	 * 目标要求接口，定义卡牌目标选择的要求
 	 */
-	@JsonIgnore
+
 	public interface TargetRequirement {
 		/**
 		 * 检查目标是否有效
@@ -663,7 +663,7 @@ public class Card {
 	/**
 	 * 基本目标要求实现类，使用谓词过滤目标
 	 */
-	@JsonIgnore
+
 	public static class BasicTargetRequirement implements TargetRequirement {
 		private Predicate<Tile> targetFilter;
 
@@ -697,7 +697,7 @@ public class Card {
 	/**
 	 * 相邻格子目标要求实现类，筛选出与友方单位相邻的空格子
 	 */
-	@JsonIgnore
+
 	public static class AdjacentTileTargetRequirement implements TargetRequirement {
 		private Player owner;
 
