@@ -46,6 +46,9 @@ local.properties
 .settings/
 .loadpath
 
+# Skip Eclipse Files
+.idea/
+
 # External tool builders
 .externalToolBuilders/
 
