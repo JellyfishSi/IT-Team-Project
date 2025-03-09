@@ -1,55 +1,10 @@
-package structures.basic;
-
-/**
- * A basic representation of of the Player. A player
- * has health and mana.
- * 
- * @author Dr. Richard McCreadie
- *
- */
-public class Player {
-
-	int health;
-	int mana;
-	
-	public Player() {
-		super();
-		this.health = 20;
-		this.mana = 0;
-	}
-	public Player(int health, int mana) {
-		super();
-		this.health = health;
-		this.mana = mana;
-	}
-	public int getHealth() {
-		return health;
-	}
-	public void setHealth(int health) {
-		this.health = health;
-	}
-	public int getMana() {
-		return mana;
-	}
-	public void setMana(int mana) {
-		this.mana = mana;
-	}
-	
-	
-	
-}
-package structures.basic;
-
-import structures.deck.Deck;
-import structures.hand.Hand;
-
 /**
  * A representation of a Player in the game.
  * A player has health and mana, along with a deck, hand, avatar unit.
  * The avatar unit is the player's representation on the board.
  * Player's health is tied to their avatar - if avatar is destroyed, player loses.
  *
- * @author Dr. Richard McCreadie
+ * @author Dr. Richard McCreadie & Xinge
  *
  */
 package structures.basic;
@@ -69,7 +24,7 @@ import structures.hand.Hand;
  * 玩家类，代表游戏中的一位玩家。
  * 管理玩家的生命值、法力值、牌库、手牌和头像单位。
  *
- * @author Dr. Richard McCreadie and Your Team
+ * @author Xinge
  */
 public class Player {
 
