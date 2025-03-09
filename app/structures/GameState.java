@@ -21,6 +21,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import utils.BasicObjectBuilders;
 
 import structures.basic.Card;
 import structures.basic.EffectAnimation;
@@ -137,7 +138,7 @@ public class GameState {
 		// 在实际实现中，这里需要创建每个位置的Tile对象
 		for (int x = 0; x < BOARD_WIDTH; x++) {
 			for (int y = 0; y < BOARD_HEIGHT; y++) {
-				tiles[x][y] = BasicObjectBuilders.loadTile(x, y);
+				tiles[x][y] = BasicObjectBuilders.loadTile(x+1, y+1);
 			}
 		}
 	}

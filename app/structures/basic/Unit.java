@@ -6,7 +6,7 @@
  * board. UnitAnimationSet contains the underlying information
  * about the animation frames, while ImageCorrection has
  * information for centering the unit on the tile. 
- * 
+ *
  * @author Dr. Richard McCreadie
  *
  */
