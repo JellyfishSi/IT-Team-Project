@@ -22,13 +22,13 @@ import java.util.Set;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import structures.GameState;
+
 /**
- * This is a representation of a Unit on the game board.
- * A unit has a unique id, animation data, position on the board,
- * and combat attributes like health and attack.
+ * 单位类，代表游戏棋盘上的一个单位。
+ * 包含单位的位置、动画、战斗属性和特殊能力等。
  *
- * @author Dr. Richard McCreadie
- *
+ * @author Dr. Richard McCreadie and Your Team
  */
 public class Unit {
 
@@ -75,6 +75,8 @@ public class Unit {
 	private Map<UnitStatus, Boolean> statusFlags = new HashMap<>(); // 状态标记
 	@JsonIgnore
 	private List<Artifact> equippedArtifacts = new ArrayList<>();   // 装备的神器（仅用于Avatar）
+	@JsonIgnore
+	private boolean isSummonedThisTurn = false; // 是否在本回合被召唤
 
 	/**
 	 * 默认构造函数（保持原有反序列化兼容性）
@@ -141,10 +143,13 @@ public class Unit {
 		statusFlags.put(UnitStatus.MOVED, false);
 		statusFlags.put(UnitStatus.ATTACKED, false);
 
-		// 清除一些可能会在回合结束时消失的状态
+		// 清除可能会在回合结束时消失的状态
 		if (statusFlags.containsKey(UnitStatus.STUNNED)) {
 			statusFlags.put(UnitStatus.STUNNED, false);
 		}
+
+		// 清除被召唤回合标记
+		isSummonedThisTurn = false;
 	}
 
 	/**
@@ -176,7 +181,36 @@ public class Unit {
 			owner.syncHealthWithAvatar();
 		}
 
+		// 如果单位有热诚能力，并且是单位所有者的头像受到伤害，则触发热诚效果
+		if (owner != null && unitType != UnitType.AVATAR) {
+			Unit avatar = owner.getAvatar();
+			if (avatar != null && avatar.getHealth() < avatar.getPreviousHealth()) {
+				triggerAbility("Zeal");
+			}
+		}
+
 		return previousHealth - health;
+	}
+
+	@JsonIgnore
+	private int previousHealth = -1; // 用于跟踪上一次的生命值，便于检测变化
+
+	/**
+	 * 更新上一次的生命值记录
+	 * 通常在回合开始或状态更新时调用
+	 */
+	@JsonIgnore
+	public void updatePreviousHealth() {
+		this.previousHealth = this.health;
+	}
+
+	/**
+	 * 获取上一次记录的生命值
+	 * @return 上一次的生命值
+	 */
+	@JsonIgnore
+	public int getPreviousHealth() {
+		return previousHealth == -1 ? health : previousHealth;
 	}
 
 	/**
@@ -206,6 +240,21 @@ public class Unit {
 	@JsonIgnore
 	public boolean isDead() {
 		return health <= 0;
+	}
+
+	/**
+	 * 单位死亡时的处理
+	 * 触发死亡相关效果
+	 * @param gameState 当前游戏状态
+	 */
+	@JsonIgnore
+	public void onDeath(GameState gameState) {
+		// 触发场上所有单位的死亡监视效果
+		for (Unit unit : gameState.getAllUnits()) {
+			if (unit != this && !unit.isDead()) {
+				unit.triggerAbility("Deathwatch");
+			}
+		}
 	}
 
 	/**
@@ -271,6 +320,19 @@ public class Unit {
 	}
 
 	/**
+	 * 触发指定能力的效果
+	 * @param abilityName 能力名称
+	 */
+	@JsonIgnore
+	public void triggerAbility(String abilityName) {
+		for (Ability ability : abilities) {
+			if (ability.getName().equals(abilityName)) {
+				ability.applyEffect(this);
+			}
+		}
+	}
+
+	/**
 	 * 为单位装备神器（仅用于Avatar）
 	 * @param artifact 神器对象
 	 * @return 如果成功装备则返回true
@@ -321,7 +383,22 @@ public class Unit {
 	 */
 	@JsonIgnore
 	public boolean canMove() {
-		return !hasStatus(UnitStatus.MOVED) && !hasStatus(UnitStatus.STUNNED);
+		// 晕眩单位不能移动
+		if (hasStatus(UnitStatus.STUNNED)) {
+			return false;
+		}
+
+		// 已经移动过的单位不能再移动
+		if (hasStatus(UnitStatus.MOVED)) {
+			return false;
+		}
+
+		// 本回合被召唤的单位通常不能移动，除非有冲锋能力
+		if (isSummonedThisTurn && !hasAbility("Rush")) {
+			return false;
+		}
+
+		return true;
 	}
 
 	/**
@@ -331,7 +408,22 @@ public class Unit {
 	 */
 	@JsonIgnore
 	public boolean canAttack() {
-		return !hasStatus(UnitStatus.ATTACKED) && !hasStatus(UnitStatus.STUNNED);
+		// 晕眩单位不能攻击
+		if (hasStatus(UnitStatus.STUNNED)) {
+			return false;
+		}
+
+		// 已经攻击过的单位不能再攻击
+		if (hasStatus(UnitStatus.ATTACKED)) {
+			return false;
+		}
+
+		// 本回合被召唤的单位通常不能攻击，除非有冲锋能力
+		if (isSummonedThisTurn && !hasAbility("Rush")) {
+			return false;
+		}
+
+		return true;
 	}
 
 	/**
@@ -348,6 +440,39 @@ public class Unit {
 	@JsonIgnore
 	public void onUnitAttacked() {
 		setStatus(UnitStatus.ATTACKED, true);
+	}
+
+	/**
+	 * 单位召唤时的处理
+	 * @param gameState 当前游戏状态
+	 */
+	@JsonIgnore
+	public void onSummon(GameState gameState) {
+		// 标记为本回合召唤
+		isSummonedThisTurn = true;
+
+		// 触发入场效果（如果有）
+		if (hasAbility("OpeningGambit")) {
+			triggerAbility("OpeningGambit");
+		}
+	}
+
+	/**
+	 * 获取单位是否在本回合被召唤
+	 * @return 如果是本回合召唤则返回true
+	 */
+	@JsonIgnore
+	public boolean isSummonedThisTurn() {
+		return isSummonedThisTurn;
+	}
+
+	/**
+	 * 设置单位是否在本回合被召唤
+	 * @param isSummonedThisTurn 是否在本回合被召唤
+	 */
+	@JsonIgnore
+	public void setSummonedThisTurn(boolean isSummonedThisTurn) {
+		this.isSummonedThisTurn = isSummonedThisTurn;
 	}
 
 	// 原有的getter和setter方法（保持兼容性）
@@ -461,21 +586,317 @@ public class Unit {
 
 	@JsonIgnore
 	public Set<Ability> getAbilities() {
-		return abilities;
+		return new HashSet<>(abilities);
 	}
 
 	@JsonIgnore
 	public List<Artifact> getEquippedArtifacts() {
-		return equippedArtifacts;
+		return new ArrayList<>(equippedArtifacts);
+	}
+
+	@JsonIgnore
+	public Map<UnitStatus, Boolean> getStatusFlags() {
+		return new HashMap<>(statusFlags);
 	}
 
 	/**
-	 * 能力接口，定义单位特殊能力
+	 * 单位能力接口，定义单位特殊能力
 	 */
 	@JsonIgnore
 	public interface Ability {
+		/**
+		 * 获取能力名称
+		 * @return 能力名称
+		 */
 		String getName();
+
+		/**
+		 * 应用能力效果
+		 * @param unit 目标单位
+		 */
 		void applyEffect(Unit unit);
+	}
+
+	/**
+	 * 嘲讽能力实现
+	 */
+	@JsonIgnore
+	public static class ProvokeAbility implements Ability {
+		@Override
+		public String getName() {
+			return "Provoke";
+		}
+
+		@Override
+		public void applyEffect(Unit unit) {
+			// 嘲讽效果主要在GameState中处理移动和攻击逻辑时使用
+		}
+	}
+
+	/**
+	 * 飞行能力实现
+	 */
+	@JsonIgnore
+	public static class FlyingAbility implements Ability {
+		@Override
+		public String getName() {
+			return "Flying";
+		}
+
+		@Override
+		public void applyEffect(Unit unit) {
+			// 飞行效果主要在GameState中处理移动逻辑时使用
+		}
+	}
+
+	/**
+	 * 冲锋能力实现
+	 */
+	@JsonIgnore
+	public static class RushAbility implements Ability {
+		@Override
+		public String getName() {
+			return "Rush";
+		}
+
+		@Override
+		public void applyEffect(Unit unit) {
+			// 冲锋效果在canMove和canAttack中直接处理
+		}
+	}
+
+	/**
+	 * 死亡监视能力基类
+	 * 具体效果由子类实现
+	 */
+	@JsonIgnore
+	public static abstract class DeathwatchAbility implements Ability {
+		@Override
+		public String getName() {
+			return "Deathwatch";
+		}
+
+		@Override
+		public abstract void applyEffect(Unit unit);
+	}
+
+	/**
+	 * 属性增益死亡监视能力
+	 * 用于Shadow Watcher类型的单位
+	 */
+	@JsonIgnore
+	public static class StatBuffDeathwatchAbility extends DeathwatchAbility {
+		private int attackBuff;
+		private int healthBuff;
+
+		public StatBuffDeathwatchAbility(int attackBuff, int healthBuff) {
+			this.attackBuff = attackBuff;
+			this.healthBuff = healthBuff;
+		}
+
+		@Override
+		public void applyEffect(Unit unit) {
+			unit.buffAttack(attackBuff);
+			unit.buffHealth(healthBuff);
+		}
+	}
+
+	/**
+	 * 只增加攻击力的死亡监视能力
+	 * 用于Bad Omen类型的单位
+	 */
+	@JsonIgnore
+	public static class AttackBuffDeathwatchAbility extends DeathwatchAbility {
+		private int attackBuff;
+
+		public AttackBuffDeathwatchAbility(int attackBuff) {
+			this.attackBuff = attackBuff;
+		}
+
+		@Override
+		public void applyEffect(Unit unit) {
+			unit.buffAttack(attackBuff);
+		}
+	}
+
+	/**
+	 * 伤害和治疗死亡监视能力
+	 * 用于Shadowdancer类型的单位
+	 */
+	@JsonIgnore
+	public static class DamageHealDeathwatchAbility extends DeathwatchAbility {
+		private int damage;
+		private int heal;
+
+		public DamageHealDeathwatchAbility(int damage, int heal) {
+			this.damage = damage;
+			this.heal = heal;
+		}
+
+		@Override
+		public void applyEffect(Unit unit) {
+			Player owner = unit.getOwner();
+			if (owner != null) {
+				Player enemy = owner.isHuman() ?
+						GameState.getInstance().getAiPlayer() :
+						GameState.getInstance().getHumanPlayer();
+
+				if (enemy != null && enemy.getAvatar() != null) {
+					enemy.getAvatar().takeDamage(damage);
+				}
+
+				owner.heal(heal);
+			}
+		}
+	}
+
+	/**
+	 * 召唤死亡监视能力
+	 * 用于Bloodmoon Priestess类型的单位
+	 */
+	@JsonIgnore
+	public static class SummonDeathwatchAbility extends DeathwatchAbility {
+		private String unitToSummon;
+
+		public SummonDeathwatchAbility(String unitToSummon) {
+			this.unitToSummon = unitToSummon;
+		}
+
+		@Override
+		public void applyEffect(Unit unit) {
+			GameState gameState = GameState.getInstance();
+			gameState.summonAdjacentRandomUnit(unit, unitToSummon);
+		}
+	}
+
+	/**
+	 * 入场效果能力基类
+	 * 具体效果由子类实现
+	 */
+	@JsonIgnore
+	public static abstract class OpeningGambitAbility implements Ability {
+		@Override
+		public String getName() {
+			return "OpeningGambit";
+		}
+
+		@Override
+		public abstract void applyEffect(Unit unit);
+	}
+
+	/**
+	 * 召唤单位入场效果
+	 * 用于Gloom Chaser类型的单位
+	 */
+	@JsonIgnore
+	public static class SummonOpeningGambitAbility extends OpeningGambitAbility {
+		private String unitToSummon;
+		private Position relativePosition; // 相对位置
+
+		public SummonOpeningGambitAbility(String unitToSummon, Position relativePosition) {
+			this.unitToSummon = unitToSummon;
+			this.relativePosition = relativePosition;
+		}
+
+		@Override
+		public void applyEffect(Unit unit) {
+			GameState gameState = GameState.getInstance();
+			Position currentPos = unit.getPosition();
+			int targetX = currentPos.getTilex() + relativePosition.getTilex();
+			int targetY = currentPos.getTiley() + relativePosition.getTiley();
+
+			if (gameState.isValidPosition(targetX, targetY)) {
+				Tile targetTile = gameState.getTile(targetX, targetY);
+				if (targetTile != null && gameState.getUnitAtTile(targetTile) == null) {
+					gameState.summonUnitAt(unitToSummon, targetTile, unit.getOwner());
+				}
+			}
+		}
+	}
+
+	/**
+	 * 消灭敌方单位入场效果
+	 * 用于Nightsorrow Assassin类型的单位
+	 */
+	@JsonIgnore
+	public static class DestroyOpeningGambitAbility extends OpeningGambitAbility {
+		@Override
+		public void applyEffect(Unit unit) {
+			GameState gameState = GameState.getInstance();
+			List<Unit> validTargets = gameState.getAdjacentEnemyUnitsWithLowHealth(unit);
+
+			if (!validTargets.isEmpty()) {
+				// 这里可以实现选择目标的逻辑，现在简单地选择第一个
+				Unit target = validTargets.get(0);
+				gameState.removeUnit(target);
+			}
+		}
+	}
+
+	/**
+	 * 增益友方单位入场效果
+	 * 用于Silverguard Squire类型的单位
+	 */
+	@JsonIgnore
+	public static class BuffOpeningGambitAbility extends OpeningGambitAbility {
+		private int attackBuff;
+		private int healthBuff;
+
+		public BuffOpeningGambitAbility(int attackBuff, int healthBuff) {
+			this.attackBuff = attackBuff;
+			this.healthBuff = healthBuff;
+		}
+
+		@Override
+		public void applyEffect(Unit unit) {
+			GameState gameState = GameState.getInstance();
+			List<Unit> validTargets = gameState.getAdjacentFriendlyUnitsInLine(unit);
+
+			for (Unit target : validTargets) {
+				target.buffAttack(attackBuff);
+				target.buffHealth(healthBuff);
+			}
+		}
+	}
+
+	/**
+	 * 热诚能力实现
+	 * 当玩家头像受到伤害时触发
+	 */
+	@JsonIgnore
+	public static class ZealAbility implements Ability {
+		private int attackBuff;
+
+		public ZealAbility(int attackBuff) {
+			this.attackBuff = attackBuff;
+		}
+
+		@Override
+		public String getName() {
+			return "Zeal";
+		}
+
+		@Override
+		public void applyEffect(Unit unit) {
+			unit.buffAttack(attackBuff);
+		}
+	}
+
+	/**
+	 * 空投能力实现
+	 * 允许单位被放置在棋盘上的任何位置
+	 */
+	@JsonIgnore
+	public static class AirdropAbility implements Ability {
+		@Override
+		public String getName() {
+			return "Airdrop";
+		}
+
+		@Override
+		public void applyEffect(Unit unit) {
+			// 空投效果主要在卡牌使用时的目标选择中处理
+		}
 	}
 
 	/**
@@ -486,10 +907,12 @@ public class Unit {
 		private String name;
 		private int robustness;
 		private Map<String, Object> properties = new HashMap<>();
+		private ArtifactEffect effect;
 
-		public Artifact(String name, int robustness) {
+		public Artifact(String name, int robustness, ArtifactEffect effect) {
 			this.name = name;
 			this.robustness = robustness;
+			this.effect = effect;
 		}
 
 		public String getName() {
@@ -511,5 +934,38 @@ public class Unit {
 		public Object getProperty(String key) {
 			return properties.get(key);
 		}
+
+		public void triggerEffect(Unit unit, GameEvent event) {
+			if (effect != null) {
+				effect.onTrigger(unit, event);
+			}
+		}
+
+		/**
+		 * 神器效果接口
+		 */
+		public interface ArtifactEffect {
+			void onTrigger(Unit unit, GameEvent event);
+		}
+	}
+
+	/**
+	 * 游戏事件枚举
+	 * 用于触发神器效果
+	 */
+	@JsonIgnore
+	public enum GameEvent {
+		ON_DAMAGE,      // 受到伤害时
+		ON_ATTACK,      // 攻击时
+		ON_KILL,        // 击杀单位时
+		ON_TURN_START,  // 回合开始时
+		ON_TURN_END     // 回合结束时
+	}
+
+	// 静态辅助方法，从GameState获取当前游戏状态实例（临时添加，实际实现中需要修改）
+	@JsonIgnore
+	private static GameState getInstance() {
+		// 这里只是为了编译通过，实际应该有获取GameState实例的方法
+		return null;
 	}
 }
