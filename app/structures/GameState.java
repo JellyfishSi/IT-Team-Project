@@ -135,11 +135,9 @@ public class GameState {
 		unitPositions = new HashMap<>();
 
 		// 在实际实现中，这里需要创建每个位置的Tile对象
-		// 现在仅作为示例，完整实现需要加载每个位置的Tile
 		for (int x = 0; x < BOARD_WIDTH; x++) {
 			for (int y = 0; y < BOARD_HEIGHT; y++) {
-				// 这里应该使用实际的Tile构造方法
-				// 示例: tiles[x][y] = BasicObjectBuilders.loadTile(x+1, y+1);
+				tiles[x][y] = BasicObjectBuilders.loadTile(x, y);
 			}
 		}
 	}
