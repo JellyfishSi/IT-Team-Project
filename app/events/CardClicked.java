@@ -9,6 +9,7 @@ import structures.basic.Card;
 import structures.basic.Player;
 import structures.basic.Tile;
 import structures.hand.Hand;
+import utils.UIHelper;
 
 /**
  * Indicates that the user has clicked an object on the game canvas, in this case a card.
@@ -133,20 +134,7 @@ public class CardClicked implements EventProcessor{
 		}
 
 		// 清除所有格子高亮
-		clearTileHighlights(out, gameState);
+		UIHelper.clearTileHighlights(out, gameState);
 	}
 
-	/**
-	 * 清除所有格子的高亮
-	 */
-	private void clearTileHighlights(ActorRef out, GameState gameState) {
-		for (int x = 0; x < gameState.getBoardWidth(); x++) {
-			for (int y = 0; y < gameState.getBoardHeight(); y++) {
-				Tile tile = gameState.getTile(x, y);
-				if (tile != null) {
-					BasicCommands.drawTile(out, tile, 0); // 0表示不高亮
-				}
-			}
-		}
-	}
 }

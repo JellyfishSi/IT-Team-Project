@@ -13,6 +13,7 @@ import structures.basic.Unit;
 import structures.hand.Hand;
 import utils.BasicObjectBuilders;
 import utils.StaticConfFiles;
+import utils.UIHelper;
 
 /**
  * 卡牌控制器类，负责处理卡牌相关的操作。
@@ -575,20 +576,6 @@ public class CardController {
         }
 
         // 清除所有格子高亮
-        clearTileHighlights();
-    }
-
-    /**
-     * 清除所有格子的高亮
-     */
-    private void clearTileHighlights() {
-        for (int x = 0; x < gameState.getBoardWidth(); x++) {
-            for (int y = 0; y < gameState.getBoardHeight(); y++) {
-                Tile tile = gameState.getTile(x, y);
-                if (tile != null) {
-                    BasicCommands.drawTile(out, tile, 0); // 0表示不高亮
-                }
-            }
-        }
+        UIHelper.clearTileHighlights(out, gameState);
     }
 }

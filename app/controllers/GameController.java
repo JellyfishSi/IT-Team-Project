@@ -13,6 +13,8 @@ import utils.BasicObjectBuilders;
 import utils.OrderedCardLoader;
 import utils.StaticConfFiles;
 
+import java.util.List;
+
 /**
  * 游戏控制器类，负责游戏的高层逻辑和协调。
  * 管理游戏初始化、回合流程、结束条件检查等。
@@ -453,13 +455,6 @@ public class GameController {
         } else {
             BasicCommands.addPlayer1Notification(out, "无法移动到该位置", 2);
         }
-    }
-
-    /**
-     * 处理卡牌点击事件
-     */
-    public void handleCardClick(int handPosition) {
-        cardController.handleCardClick(handPosition, gameState);
     }
 
     /**

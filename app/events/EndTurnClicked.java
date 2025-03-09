@@ -7,6 +7,7 @@ import commands.BasicCommands;
 import structures.GameState;
 import structures.basic.Player;
 import structures.basic.Unit;
+import utils.UIHelper;
 
 /**
  * Indicates that the user has clicked an object on the game canvas, in this case
@@ -257,20 +258,8 @@ public class EndTurnClicked implements EventProcessor{
 		gameState.setSelectedCard(null);
 
 		// 清除所有高亮
-		clearTileHighlights(out, gameState);
+		UIHelper.clearTileHighlights(out, gameState);
 	}
 
-	/**
-	 * 清除所有格子的高亮
-	 */
-	private void clearTileHighlights(ActorRef out, GameState gameState) {
-		for (int x = 0; x < gameState.getBoardWidth(); x++) {
-			for (int y = 0; y < gameState.getBoardHeight(); y++) {
-				structures.basic.Tile tile = gameState.getTile(x, y);
-				if (tile != null) {
-					BasicCommands.drawTile(out, tile, 0); // 0表示不高亮
-				}
-			}
-		}
-	}
+
 }

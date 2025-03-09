@@ -390,17 +390,4 @@ public class CombatController {
         }
     }
 
-    /**
-     * 清除所有格子的高亮
-     */
-    public void clearTileHighlights() {
-        for (int x = 0; x < gameState.getBoardWidth(); x++) {
-            for (int y = 0; y < gameState.getBoardHeight(); y++) {
-                Tile tile = gameState.getTile(x, y);
-                if (tile != null) {
-                    BasicCommands.drawTile(out, tile, 0); // 0表示不高亮
-                }
-            }
-        }
-    }
 }

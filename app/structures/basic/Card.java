@@ -299,7 +299,7 @@ public class Card {
 	 * @return 创建的单位实例
 	 */
 	@JsonIgnore
-	protected Unit createUnit(Tile targetTile) {
+    public Unit createUnit(Tile targetTile) {
 		if (!isCreature || unitConfig == null) {
 			return null;
 		}
